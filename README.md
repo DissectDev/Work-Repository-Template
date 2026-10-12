@@ -10,6 +10,7 @@
 | 比较复杂方案、记录证据和验证方式 | [完整版 MADR](templates/madr-full.md) |
 | 检查一份决策是否说清楚 | [七问评审](docs/guides/adr-review.md) |
 | 查找已经作出的决策 | [决策目录](docs/decisions/README.md) |
+| 查看调研与对比材料 | [调研目录](docs/research/README.md) |
 | 查找或新增模板类型 | [模板目录](templates/README.md) |
 
 ## 一次性设置为 GitHub 模板仓库

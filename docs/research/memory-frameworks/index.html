@@ -1,0 +1,1328 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Memory Framework Matrix</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,600..800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: an engineering spec sheet. A control rail scopes everything below it, a sortable overview comes first, then one panel per comparison axis. */
+:root {
+  --bg: #eef1f3;
+  --surface: #fbfcfc;
+  --surface-2: #f2f4f6;
+  --ink: #14181c;
+  --ink-2: #444d56;
+  --muted: #69727b;
+  --rule: #dde2e6;
+  --rule-strong: #c2c9cf;
+  --accent: #3245a6;
+  --accent-ink: #ffffff;
+  --accent-wash: rgba(50, 69, 166, 0.09);
+  --bar: #7a8691;
+  --bar-track: #e3e7ea;
+  --code-bg: #eaeef1;
+  --s1: #2a78d6;
+  --s2: #eb6834;
+  --s3: #1baf7a;
+  --s4: #eda100;
+  --s5: #e87ba4;
+  --good: #0ca30c;
+  --warning: #fab219;
+  --shadow: 0 1px 2px rgba(20, 24, 28, 0.05), 0 6px 20px rgba(20, 24, 28, 0.05);
+  --font-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1113;
+    --surface: #15181b;
+    --surface-2: #1b1f23;
+    --ink: #e8ebee;
+    --ink-2: #b4bcc3;
+    --muted: #8c959d;
+    --rule: #262c31;
+    --rule-strong: #39424a;
+    --accent: #a3b0ff;
+    --accent-ink: #0e1113;
+    --accent-wash: rgba(163, 176, 255, 0.12);
+    --bar: #8e99a3;
+    --bar-track: #272d32;
+    --code-bg: #1f2428;
+    --s1: #3987e5;
+    --s2: #d95926;
+    --s3: #199e70;
+    --s4: #c98500;
+    --s5: #d55181;
+    --shadow: none;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1113;
+  --surface: #15181b;
+  --surface-2: #1b1f23;
+  --ink: #e8ebee;
+  --ink-2: #b4bcc3;
+  --muted: #8c959d;
+  --rule: #262c31;
+  --rule-strong: #39424a;
+  --accent: #a3b0ff;
+  --accent-ink: #0e1113;
+  --accent-wash: rgba(163, 176, 255, 0.12);
+  --bar: #8e99a3;
+  --bar-track: #272d32;
+  --code-bg: #1f2428;
+  --s1: #3987e5;
+  --s2: #d95926;
+  --s3: #199e70;
+  --s4: #c98500;
+  --s5: #d55181;
+  --shadow: none;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+}
+a { color: var(--accent); text-underline-offset: 2px; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+code, .mono { font-family: var(--font-mono); font-size: 0.86em; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+.page { max-width: 1260px; margin: 0 auto; padding-inline: clamp(16px, 4vw, 40px); padding-block: 32px 72px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; }
+.page > *, .panel > *, .bench > *, .lane > * { min-width: 0; }
+
+/* Masthead */
+.masthead { display: grid; gap: 10px; }
+.eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+h1 {
+  font-family: var(--font-display);
+  font-stretch: 87.5%;
+  font-weight: 800;
+  font-size: clamp(32px, 5vw, 52px);
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+  margin: 0;
+  text-wrap: balance;
+}
+.lede { margin: 0; max-width: 68ch; color: var(--ink-2); font-size: 16px; }
+.verbs { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 0; padding: 0; list-style: none; }
+.verbs li { font-family: var(--font-mono); font-size: 13px; padding: 2px 8px; border: 1px solid var(--rule-strong); border-radius: 4px; color: var(--ink-2); background: var(--surface); }
+
+/* Control rail */
+.rail {
+  display: flex; flex-wrap: wrap; align-items: end; gap: 14px 22px;
+  padding: 12px 16px; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; box-shadow: var(--shadow);
+}
+@media (min-width: 760px) {
+  .rail { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; }
+}
+.ctl { display: grid; gap: 5px; min-width: 0; }
+.ctl-label { font-size: 11.5px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
+fieldset.ctl { border: 0; margin: 0; padding: 0; }
+fieldset.ctl legend { padding: 0; margin-bottom: 5px; }
+.seg { display: flex; flex-wrap: wrap; border: 1px solid var(--rule-strong); border-radius: 7px; overflow: hidden; }
+.seg label { position: relative; cursor: pointer; }
+.seg input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.seg span { display: block; padding: 6px 12px; font-size: 13.5px; font-weight: 500; color: var(--ink-2); border-right: 1px solid var(--rule-strong); white-space: nowrap; }
+.seg label:last-child span { border-right: 0; }
+.seg label:hover span { background: var(--accent-wash); }
+.seg input:checked + span { background: var(--accent); color: var(--accent-ink); }
+.seg input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: -4px; border-radius: 5px; }
+@media (max-width: 560px) {
+  .seg { display: grid; width: 100%; }
+  .seg span { border-right: 0; border-bottom: 1px solid var(--rule-strong); }
+  .seg label:last-child span { border-bottom: 0; }
+  .ctl { width: 100%; }
+  .jump { margin-left: 0; }
+}
+select {
+  font: inherit; font-size: 13.5px; font-weight: 500; color: var(--ink); background: var(--surface);
+  border: 1px solid var(--rule-strong); border-radius: 7px; padding: 6px 30px 6px 10px; max-width: 100%;
+  appearance: none; -webkit-appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 15px) 50%, calc(100% - 10px) 50%;
+  background-size: 5px 5px; background-repeat: no-repeat;
+}
+.jump { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-left: auto; font-size: 13.5px; }
+.jump a { color: var(--ink-2); text-decoration: none; padding: 6px 0; }
+.jump a:hover { color: var(--accent); text-decoration: underline; }
+
+/* Findings */
+.findings { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.finding { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 16px; display: grid; gap: 4px; align-content: start; }
+.finding .label { font-size: 13px; color: var(--muted); font-weight: 500; }
+.finding .value { font-size: 30px; font-weight: 600; line-height: 1.15; letter-spacing: -0.01em; }
+.finding .note { font-size: 13.5px; color: var(--ink-2); }
+
+/* Panels */
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: clamp(16px, 2.6vw, 26px); display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; min-width: 0; box-shadow: var(--shadow); scroll-margin-top: 92px; }
+.panel-head { display: grid; gap: 6px; }
+h2 { font-family: var(--font-display); font-stretch: 87.5%; font-weight: 700; font-size: 24px; line-height: 1.15; margin: 0; text-wrap: balance; }
+h3 { font-family: var(--font-display); font-stretch: 87.5%; font-weight: 700; font-size: 18px; line-height: 1.2; margin: 0; }
+.panel-head p { margin: 0; color: var(--ink-2); max-width: 75ch; }
+.meta-line { font-size: 13px; color: var(--muted); }
+.legend-line { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--ink-2); margin: 0; padding: 0; list-style: none; }
+.legend-line li { display: flex; align-items: center; gap: 6px; }
+
+/* Tables */
+.table-wrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 8px; background: var(--surface); }
+table.grid { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 14px; }
+table.grid th, table.grid td { padding: 10px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--rule); }
+table.grid tbody tr:last-child > * { border-bottom: 0; }
+table.grid thead th { position: sticky; top: 0; background: var(--surface-2); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); white-space: nowrap; vertical-align: bottom; z-index: 1; }
+table.grid tbody th[scope="row"] { position: sticky; left: 0; background: var(--surface); z-index: 1; font-weight: 400; min-width: 150px; }
+table.grid tbody tr:hover > * { background: var(--surface-2); }
+table.grid .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+table.grid .num .small { white-space: normal; }
+.sort { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; color: inherit; border-radius: 3px; }
+.sort:hover { color: var(--ink); }
+.sort:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sort-ind { display: inline-block; width: 9px; font-size: 9px; color: var(--rule-strong); }
+.sort-ind::after { content: "\25B4\25BE"; letter-spacing: -1px; }
+th[aria-sort="ascending"] .sort, th[aria-sort="descending"] .sort { color: var(--accent); }
+th[aria-sort="ascending"] .sort-ind, th[aria-sort="descending"] .sort-ind { color: var(--accent); }
+th[aria-sort="ascending"] .sort-ind::after { content: "\25B4"; }
+th[aria-sort="descending"] .sort-ind::after { content: "\25BE"; }
+th.num .sort { flex-direction: row-reverse; }
+.table-note { font-size: 13px; color: var(--muted); margin: 0; }
+
+/* Cell parts */
+.fw { display: grid; grid-template-columns: 10px auto; column-gap: 8px; align-items: baseline; }
+.fw .name { font-weight: 600; color: var(--ink); }
+.fw .sub { grid-column: 2; font-size: 12.5px; color: var(--muted); }
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; transform: translateY(1px); }
+.ring { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; border: 2px solid var(--muted); background: var(--surface); transform: translateY(1px); }
+.line-key { width: 16px; height: 2px; background: var(--ink-2); display: inline-block; border-radius: 1px; }
+.muted { color: var(--muted); }
+.small { font-size: 12.5px; }
+.stack { display: grid; gap: 4px; }
+.dbar { display: block; height: 6px; border-radius: 3px; background: var(--bar-track); width: 100%; min-width: 72px; overflow: hidden; }
+.dbar > span { display: block; height: 100%; background: var(--bar); border-radius: 0 3px 3px 0; }
+.pips { display: inline-flex; gap: 3px; vertical-align: middle; }
+.pips i { width: 9px; height: 9px; border-radius: 2px; background: var(--bar-track); display: block; }
+.pips i.on { background: var(--bar); }
+.level { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+.calls { display: grid; gap: 3px; margin-top: 6px; }
+.calls code, .codeblock code { display: block; background: var(--code-bg); border-radius: 4px; padding: 3px 7px; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ink); }
+.cell-note { font-size: 12.5px; color: var(--muted); margin-top: 5px; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip { font-size: 12.5px; padding: 1px 7px; border: 1px solid var(--rule-strong); border-radius: 999px; white-space: nowrap; color: var(--ink-2); background: var(--surface); }
+.chip.def { border-color: var(--ink-2); color: var(--ink); font-weight: 600; }
+.chip.dim { border-style: solid; color: var(--muted); }
+.chip-more { all: unset; cursor: pointer; font-size: 12.5px; padding: 1px 7px; border-radius: 999px; color: var(--accent); font-weight: 600; }
+.chip-more:hover { background: var(--accent-wash); }
+.chip-more:focus-visible { outline: 2px solid var(--accent); }
+.status { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 500; white-space: nowrap; }
+.status::before { content: ""; width: 9px; height: 9px; flex: none; }
+.st-active::before { background: var(--good); border-radius: 50%; }
+.st-maint::before { background: var(--warning); clip-path: polygon(50% 0, 100% 100%, 0 100%); width: 11px; height: 10px; }
+.st-managed::before { border: 2px solid var(--good); border-radius: 50%; }
+.tag { font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--rule-strong); border-radius: 4px; padding: 0 5px; margin-left: 6px; white-space: nowrap; }
+td.wrap-md { min-width: 210px; }
+td.wrap-lg { min-width: 290px; }
+td.wrap-model { min-width: 170px; max-width: 220px; }
+td.wrap-default { min-width: 120px; max-width: 170px; }
+td.wrap-sm { min-width: 150px; }
+
+/* Benchmark chart */
+.bench { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.chart-card { position: relative; border: 1px solid var(--rule); border-radius: 8px; padding: 12px 8px 4px; background: var(--surface); }
+.chart-host { width: 100%; min-height: 320px; }
+.chart-host svg { display: block; width: 100%; height: auto; overflow: visible; }
+.ax text { fill: var(--muted); font-size: 11.5px; font-family: var(--font-body); }
+.ax-title { fill: var(--ink-2); font-size: 12px; font-weight: 500; font-family: var(--font-body); }
+.gridline { stroke: var(--rule); stroke-width: 1; }
+.baseline { stroke: var(--rule-strong); stroke-width: 1; }
+.frontier { fill: none; stroke: var(--ink-2); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; opacity: 0.55; }
+.pt-label { font-size: 12px; font-family: var(--font-body); fill: var(--ink); font-weight: 600; }
+.pt-label.ref { fill: var(--muted); font-weight: 500; }
+.pt { cursor: pointer; }
+.pt:focus { outline: none; }
+.pt:focus-visible .pt-mark, .pt:hover .pt-mark { stroke-width: 3; }
+.tip {
+  position: absolute; pointer-events: none; z-index: 5; min-width: 168px; max-width: 240px;
+  background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 8px; padding: 8px 10px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.14);
+  font-size: 12.5px; color: var(--ink-2); display: grid; gap: 2px;
+}
+.tip strong { font-size: 18px; color: var(--ink); font-weight: 600; line-height: 1.2; }
+.tip .tip-name { display: flex; align-items: center; gap: 6px; color: var(--ink); font-weight: 500; }
+.tip .tip-key { width: 12px; height: 3px; border-radius: 2px; display: inline-block; }
+
+.callout { border: 1px solid var(--rule); border-left: 3px solid var(--warning); border-radius: 6px; padding: 10px 14px; background: var(--surface-2); font-size: 14px; color: var(--ink-2); display: grid; gap: 4px; }
+.callout strong { color: var(--ink); }
+
+/* Pipelines */
+.lanes { display: grid; gap: 12px; }
+.lane { display: grid; grid-template-columns: minmax(170px, 220px) minmax(0, 1fr); gap: 14px 22px; padding: 16px; border: 1px solid var(--rule); border-radius: 10px; background: var(--surface); }
+.lane-head { display: grid; gap: 6px; align-content: start; }
+.lane-head .title { display: flex; align-items: center; gap: 8px; }
+.lane-head p { margin: 0; font-size: 13.5px; color: var(--ink-2); }
+.lane-body { display: grid; gap: 14px; min-width: 0; }
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; counter-reset: step; }
+.steps li { position: relative; display: flex; gap: 8px; align-items: baseline; flex: 1 1 170px; max-width: 100%; padding: 8px 10px; border: 1px solid var(--rule-strong); border-radius: 6px; font-size: 13.5px; background: var(--surface-2); }
+.steps li::before { counter-increment: step; content: counter(step); font-family: var(--font-mono); font-size: 11.5px; font-weight: 500; color: var(--muted); flex: none; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px 20px; margin: 0; }
+.facts div { min-width: 0; }
+.facts dt { font-size: 11.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.facts dd { margin: 2px 0 0; font-size: 13.5px; color: var(--ink-2); }
+@media (max-width: 700px) {
+  .lane { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Scales */
+.scale { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--ink-2); margin: 0; padding: 0; list-style: none; }
+.scale li { display: flex; align-items: center; gap: 7px; }
+
+/* Sources */
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px 32px; }
+.cols h3 { margin-bottom: 8px; }
+.cols ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; color: var(--ink-2); }
+.foot { font-size: 13px; color: var(--muted); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .seg span, .chip-more, .sort { transition: background-color 120ms ease, color 120ms ease; }
+}
+@media (forced-colors: active) {
+  .dot, .dbar > span, .pips i.on { forced-color-adjust: none; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="masthead">
+    <p class="eyebrow">Agent memory · compared as of 12 Oct 2026</p>
+    <h1>Memory Framework Matrix</h1>
+    <p class="lede">Cognee, Hindsight, Mem0, Zep and GraphRAG side by side: official DolphinBench runs, how each one turns conversations into memory, where it keeps vectors, how its API covers the four memory verbs, and how much work it takes to put behind an agent.</p>
+    <ul class="verbs" aria-label="The four memory verbs compared">
+      <li>remember</li><li>recall</li><li>improve</li><li>forget</li>
+    </ul>
+  </header>
+
+  <form class="rail" id="rail" aria-label="Dashboard controls">
+    <fieldset class="ctl">
+      <legend class="ctl-label">DolphinBench run</legend>
+      <div class="seg" id="run-seg"></div>
+    </fieldset>
+    <div class="ctl">
+      <label class="ctl-label" for="order">Order frameworks by</label>
+      <select id="order" name="order"></select>
+    </div>
+    <nav class="jump" aria-label="Sections">
+      <a href="#overview">Overview</a>
+      <a href="#dolphinbench">DolphinBench</a>
+      <a href="#pipelines">Pipelines</a>
+      <a href="#backends">Backends</a>
+      <a href="#api">API</a>
+      <a href="#setup">Setup</a>
+      <a href="#sources">Sources</a>
+    </nav>
+  </form>
+
+  <section class="findings" id="findings" aria-label="Key findings for the selected run"></section>
+
+  <section class="panel" id="overview">
+    <div class="panel-head">
+      <h2>Overview</h2>
+      <p>One row per framework. Click a column heading to sort this table; the control above reorders every section. Benchmark columns show the <strong id="ov-run">selected run</strong>.</p>
+    </div>
+    <div id="overview-table"></div>
+    <p class="table-note">API fit and setup effort are editorial ratings; the scales are defined in the API and Setup sections.</p>
+  </section>
+
+  <section class="panel" id="dolphinbench">
+    <div class="panel-head">
+      <h2>DolphinBench</h2>
+      <p>DolphinBench grades whether an agent completes real tool-using tasks that depend on facts from about 500K tokens of a simulated user's history, across 600 tests for three personas (Morgan, Alex, Riley). It reports accuracy, total cost and latency together, so the useful view is the cost-versus-accuracy frontier.</p>
+      <p class="meta-line" id="run-meta"></p>
+    </div>
+    <div class="bench">
+      <div class="chart-card">
+        <ul class="legend-line" aria-label="Chart legend">
+          <li><span class="dot" style="background: var(--s2)"></span>Hindsight</li>
+          <li><span class="dot" style="background: var(--s3)"></span>Mem0</li>
+          <li><span class="ring"></span>Other system tested, for reference</li>
+          <li><span class="line-key"></span>Pareto frontier (no cheaper run scores higher)</li>
+        </ul>
+        <div class="chart-host" id="scatter" role="img" aria-label="Scatter chart of pass rate against total cost for the selected run"></div>
+        <div class="tip" id="tip" hidden></div>
+      </div>
+      <div id="runs-table"></div>
+      <div class="callout" id="not-run"></div>
+    </div>
+    <div class="panel-head">
+      <h3>Other published results, for context only</h3>
+      <p>These come from each vendor's own reports on different benchmarks, models and settings. They are not comparable with DolphinBench or with each other.</p>
+    </div>
+    <div id="other-bench"></div>
+  </section>
+
+  <section class="panel" id="pipelines">
+    <div class="panel-head">
+      <h2>Memory extraction pipelines</h2>
+      <p>What happens between a write call and a memory you can retrieve. Steps are listed in the order each framework runs them.</p>
+    </div>
+    <div class="lanes" id="lanes"></div>
+  </section>
+
+  <section class="panel" id="backends">
+    <div class="panel-head">
+      <h2>Vector database backends</h2>
+      <p>Stores you can plug in for embeddings, plus where the graph and history live. "Choices" counts the vector-capable stores each framework supports.</p>
+    </div>
+    <div id="backends-table"></div>
+  </section>
+
+  <section class="panel" id="api">
+    <div class="panel-head">
+      <h2>API design: remember, recall, improve, forget</h2>
+      <p>How each framework exposes the four memory verbs. Cognee uses these exact names; the others map to them as shown.</p>
+      <ul class="scale" aria-label="API fit scale">
+        <li><span class="pips" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i></span>3 Native: the same verb, one call</li>
+        <li><span class="pips" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i></span>2 Direct: one call under another name</li>
+        <li><span class="pips" aria-hidden="true"><i class="on"></i><i></i><i></i></span>1 Indirect: batch job, background behaviour or manual edit</li>
+        <li><span class="pips" aria-hidden="true"><i></i><i></i><i></i></span>0 None</li>
+      </ul>
+    </div>
+    <div id="api-table"></div>
+  </section>
+
+  <section class="panel" id="setup">
+    <div class="panel-head">
+      <h2>Setup complexity for agentic apps</h2>
+      <p>The effort to get from nothing to an agent that writes and reads memory, then what production adds. Effort runs from 1 (very easy) to 5 (heavy) and weighs services to run, whether an LLM key is required, per-user scoping, and incremental writes.</p>
+    </div>
+    <div id="setup-table"></div>
+  </section>
+
+  <section class="panel" id="sources">
+    <div class="panel-head">
+      <h2>Sources and method</h2>
+    </div>
+    <div class="cols">
+      <div>
+        <h3>Sources</h3>
+        <ul>
+          <li><a href="https://github.com/mem0ai/dolphinbench/tree/main/results" target="_blank" rel="noopener">DolphinBench official run records</a> (results/README.md and website/content/official-results.json, read 12 Oct 2026)</li>
+          <li><a href="https://arxiv.org/abs/2609.24971" target="_blank" rel="noopener">DolphinBench: Mapping the Pareto Frontier of Agent Memory</a>, Rathi, Yadav and Singh, arXiv 2609.24971</li>
+          <li><a href="https://github.com/topoteretes/cognee" target="_blank" rel="noopener">Cognee README</a>, <a href="https://github.com/topoteretes/cognee/blob/main/.env.template" target="_blank" rel="noopener">.env.template</a> and <a href="https://docs.cognee.ai/core-concepts/main-operations" target="_blank" rel="noopener">main operations docs</a></li>
+          <li><a href="https://github.com/vectorize-io/hindsight" target="_blank" rel="noopener">Hindsight README</a>, Python client, and <a href="https://arxiv.org/abs/2512.12818" target="_blank" rel="noopener">Hindsight is 20/20</a>, arXiv 2512.12818</li>
+          <li><a href="https://github.com/mem0ai/mem0" target="_blank" rel="noopener">Mem0 README</a>, <code>mem0/memory/main.py</code> and <code>mem0/vector_stores/configs.py</code></li>
+          <li><a href="https://github.com/getzep/zep" target="_blank" rel="noopener">Zep examples repo</a>, <a href="https://help.getzep.com" target="_blank" rel="noopener">Zep docs</a>, the <code>zep-cloud</code> 3.30.0 SDK, <a href="https://github.com/getzep/graphiti" target="_blank" rel="noopener">Graphiti README</a> and <a href="https://arxiv.org/abs/2501.13956" target="_blank" rel="noopener">Zep: A Temporal Knowledge Graph Architecture</a></li>
+          <li><a href="https://github.com/microsoft/graphrag" target="_blank" rel="noopener">GraphRAG README</a>, index workflows, CLI and <code>graphrag-vectors</code> package; <a href="https://microsoft.github.io/graphrag" target="_blank" rel="noopener">GraphRAG docs</a></li>
+          <li>Latest versions and release dates from PyPI: cognee, hindsight-api, mem0ai, zep-cloud, graphiti-core, graphrag</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Method notes</h3>
+        <ul>
+          <li>DolphinBench is published by Mem0, one of the frameworks compared here. The run records are public and include every trace and grade, but the benchmark design is vendor-authored.</li>
+          <li>In the official runs, Mem0 used the harness's memory plugin with the hosted Mem0 Platform; Hindsight ran self-hosted from its 0.9.2 Docker image. Cognee, Zep and GraphRAG have no official run.</li>
+          <li>Total cost covers agent model calls and memory-system processing during ingestion and testing. Cost per pass is total cost divided by passed tests. Lift is the pass-rate difference from the same harness and model with built-in memory.</li>
+          <li>API fit is the sum of four 0 to 3 ratings, one per verb. Setup effort is a 1 to 5 rating. Both are judgments from the documented APIs and install paths on 12 Oct 2026, not measurements.</li>
+          <li>Backend counts include community adapters and wrappers that ship or are documented by the project; Zep's count is for its open-source Graphiti engine, since Zep Cloud runs its own graph engine.</li>
+        </ul>
+      </div>
+    </div>
+    <p class="foot">Compiled 12 Oct 2026. Re-check versions and leaderboard entries before relying on them; all five projects ship often.</p>
+  </section>
+
+</div>
+
+<noscript><p style="padding: 16px">This dashboard needs JavaScript to draw its tables and chart.</p></noscript>
+
+<script>
+"use strict";
+
+/* ---------- Data ---------- */
+
+// Official DolphinBench runs (mem0ai/dolphinbench, results/ and website/content/official-results.json).
+const RUNS = [
+  {
+    id: "luna", label: "Hermes · GPT 5.6 Luna", harness: "Hermes", model: "GPT 5.6 Luna (OpenAI, high reasoning effort)", date: "16 Sep 2026",
+    systems: [
+      { sys: "builtin", name: "Built-in", passes: 394, total: 61.48, agent: 61.48, memory: 0, med: 44.35, p95: 100.88, morgan: 131, alex: 111, riley: 152 },
+      { sys: "mem0", name: "Mem0", passes: 424, total: 96.21, agent: 61.54, memory: 34.68, med: 37.69, p95: 81.17, morgan: 156, alex: 132, riley: 136 },
+      { sys: "honcho", name: "Honcho", passes: 411, total: 142.85, agent: 96.56, memory: 46.30, med: 44.66, p95: 94.58, morgan: 144, alex: 120, riley: 147 },
+      { sys: "hindsight", name: "Hindsight", passes: 417, total: 84.65, agent: 57.99, memory: 26.66, med: 55.31, p95: 158.88, morgan: 144, alex: 127, riley: 146 },
+      { sys: "supermemory", name: "Supermemory", passes: 355, total: 345.64, agent: 63.86, memory: 281.79, med: 52.68, p95: 134.70, morgan: 138, alex: 98, riley: 119 }
+    ]
+  },
+  {
+    id: "minimax", label: "Hermes · MiniMax M3", harness: "Hermes", model: "MiniMax M3 (high reasoning effort)", date: "20–21 Sep 2026",
+    systems: [
+      { sys: "builtin", name: "Built-in", passes: 159, total: 107.03, agent: 107.03, memory: 0, med: 51.40, p95: 172.26, morgan: 56, alex: 45, riley: 58 },
+      { sys: "mem0", name: "Mem0", passes: 287, total: 148.02, agent: 111.71, memory: 36.31, med: 46.95, p95: 266.30, morgan: 108, alex: 82, riley: 97 },
+      { sys: "honcho", name: "Honcho", passes: 284, total: 211.85, agent: 168.39, memory: 43.46, med: 80.33, p95: 318.56, morgan: 108, alex: 91, riley: 85 },
+      { sys: "hindsight", name: "Hindsight", passes: 246, total: 158.33, agent: 119.51, memory: 38.82, med: 144.28, p95: 602.86, morgan: 109, alex: 93, riley: 44 },
+      { sys: "supermemory", name: "Supermemory", passes: 120, total: 497.70, agent: 111.68, memory: 386.02, med: 137.52, p95: 1846.17, morgan: 45, alex: 37, riley: 38 }
+    ]
+  },
+  {
+    id: "claude", label: "Claude Code · Sonnet 5", harness: "Claude Code", model: "Claude Sonnet 5", date: "21 Sep 2026",
+    systems: [
+      { sys: "builtin", name: "Built-in", passes: 158, total: 1132.75, agent: 1132.75, memory: 0, med: 32.19, p95: 68.78, morgan: 69, alex: 47, riley: 42 },
+      { sys: "honcho", name: "Honcho", passes: 215, total: 1565.82, agent: 1556.02, memory: 9.79, med: 37.92, p95: 78.54, morgan: 93, alex: 63, riley: 59 },
+      { sys: "mem0", name: "Mem0", passes: 194, total: 1830.57, agent: 1803.63, memory: 26.94, med: 42.30, p95: 153.84, morgan: 81, alex: 72, riley: 41 }
+    ]
+  }
+];
+const TESTS = 600;
+
+const LEVEL_WORD = ["None", "Indirect", "Direct", "Native"];
+const EFFORT_WORD = ["", "Very easy", "Easy", "Moderate", "Involved", "Heavy"];
+
+const FW = [
+  {
+    id: "cognee", name: "Cognee", maker: "Topoteretes", color: "var(--s1)",
+    model: "Knowledge graph plus vectors, with a self-improvement pass",
+    license: "Apache-2.0", release: { v: "1.6.3", date: "2026-10-07" },
+    status: { kind: "active", label: "Active" },
+    pipeline: {
+      steps: [
+        "remember() ingests text, files or code into a dataset",
+        "Chunk documents; code becomes a graph of symbols and dependencies",
+        "Extract entities and relationships with an LLM, or the local GLiNER model when no key is set",
+        "Embed chunks and write graph, vectors and metadata",
+        "improve() enriches the graph, infers new links, applies feedback and moves session lessons into permanent memory"
+      ],
+      llm: "No. Local GLiNER extraction and local embeddings work without a key; LLM-only improvement stages are skipped.",
+      change: "improve() runs in the background after remember() by default and can be called on demand or scoped to a dataset.",
+      retrieval: "recall() picks graph, vector or code context automatically, or uses a search type you choose.",
+      scope: "Datasets and sessions; users and permissions in the API server."
+    },
+    backends: {
+      count: 7, def: "LanceDB, embedded",
+      vector: [["LanceDB", "def"], ["pgvector"], ["Turso"], ["Qdrant", "community"], ["Weaviate", "community"], ["Milvus", "community"], ["ChromaDB", "community"]],
+      graph: "Kuzu (default), Neo4j, remote Kuzu, Turso. Graph-on-Postgres exists as a demo feature.",
+      meta: "SQLite (default), Postgres or Turso. Since 1.0 the whole layer can run on one Postgres."
+    },
+    api: {
+      remember: { lvl: 3, calls: ["cognee.remember(data, dataset_name=…)"], note: "Add session_id for fast short-term session memory." },
+      recall: { lvl: 3, calls: ["cognee.recall(query, datasets=[…])"], note: "Chooses a retrieval strategy when none is given." },
+      improve: { lvl: 3, calls: ["cognee.improve()"], note: "Also runs automatically after remember()." },
+      forget: { lvl: 3, calls: ["cognee.forget(…)"], note: "Removes one item, a dataset, or everything a user owns." }
+    },
+    setup: {
+      effort: 1,
+      first: ['uv pip install "cognee[gliner]"', 'cognee-cli remember "…" -d demo', 'cognee-cli recall "…" -d demo'],
+      nokey: "Yes, with local models",
+      local: "None. Embedded SQLite, LanceDB and Kuzu files.",
+      prod: "Docker image or compose (API 8000, UI 3000, MCP 8001). The API is multi-tenant with auth on by default; add Postgres or Neo4j for shared deployments.",
+      managed: "Cognee Cloud",
+      agents: "Claude Code and Codex plugins, MCP server, OpenClaw plugin, Python, TypeScript and Rust SDKs, REST API"
+    }
+  },
+  {
+    id: "hindsight", name: "Hindsight", maker: "Vectorize", color: "var(--s2)",
+    model: "Memory banks of world facts, experiences, observations and mental models",
+    license: "MIT", release: { v: "0.10.3", date: "2026-10-08" },
+    status: { kind: "active", label: "Active" },
+    pipeline: {
+      steps: [
+        "retain() a message, document or file into a bank",
+        "LLM extracts facts, dates, entities and relationships",
+        "Normalize into canonical entities, time series and search indexes",
+        "Store as world facts or experiences, with sparse and dense vectors",
+        "Background consolidation into observations; mental models refresh"
+      ],
+      llm: "Yes. 25+ providers, including local Ollama, LM Studio and llama.cpp, or an existing Claude Code or Codex subscription.",
+      change: "Related facts consolidate into observations that keep their evidence and are refined, not overwritten, when new evidence arrives.",
+      retrieval: "Semantic, BM25, graph and temporal searches run in parallel, then reciprocal rank fusion and a cross-encoder reranker.",
+      scope: "Banks, one per user, agent or project, with strict isolation and metadata filters."
+    },
+    backends: {
+      count: 2, def: "PostgreSQL + pgvector (embedded pg0)",
+      vector: [["PostgreSQL + pgvector", "def"], ["Oracle AI Database 23ai"]],
+      graph: "Entity, temporal and causal links stored in the same database.",
+      meta: "Same database; admin CLI handles migrations."
+    },
+    api: {
+      remember: { lvl: 2, calls: ["client.retain(bank_id, content)", "retain_batch(…) · retain_files(…)"], note: "Content goes into a bank; extraction runs server-side." },
+      recall: { lvl: 3, calls: ["client.recall(bank_id, query)"], note: "Four retrieval strategies fused and reranked." },
+      improve: { lvl: 2, calls: ["client.reflect(bank_id, query)", "refresh_mental_model(bank_id, id)"], note: "Observation consolidation also runs in the background." },
+      forget: { lvl: 2, calls: ["client.delete_bank(bank_id)", "documents API: delete a document", "clear_mental_model(…)"], note: "Deletes by bank, document or mental model." }
+    },
+    setup: {
+      effort: 2,
+      first: ["docker run -p 8888:8888 -p 9999:9999 \\", "  -e HINDSIGHT_API_LLM_API_KEY=… \\", "  ghcr.io/vectorize-io/hindsight:latest", "pip install hindsight-client"],
+      nokey: "Needs an LLM, but a local one works",
+      local: "One container: API, UI and embedded Postgres. Or pip install hindsight-all to embed it in Python.",
+      prod: "External PostgreSQL with pgvector, or Oracle 23ai; Helm chart for Kubernetes.",
+      managed: "Hindsight Cloud",
+      agents: "Built-in MCP endpoint per bank, LiteLLM wrapper, coding-agent package, LangGraph, CrewAI, Pydantic AI, OpenAI Agents SDK, Google ADK and more"
+    }
+  },
+  {
+    id: "mem0", name: "Mem0", maker: "Mem0", color: "var(--s3)",
+    model: "LLM-extracted facts in a vector store, linked by entity",
+    license: "Apache-2.0; hosted Platform is commercial", release: { v: "2.2.1", date: "2026-09-25" },
+    status: { kind: "active", label: "Active" },
+    pipeline: {
+      steps: [
+        "add(messages) with a user_id, agent_id or run_id",
+        "Single-pass LLM extraction that only adds facts; agent-confirmed actions count as facts",
+        "Extract, embed and link entities across memories",
+        "Write memories and entities to the vector store; log history in SQLite"
+      ],
+      llm: "Yes for infer=True, the default (OpenAI gpt-5-mini unless configured). infer=False stores raw messages without an LLM.",
+      change: "Since the April 2026 algorithm nothing is overwritten. Memories accumulate and time-aware retrieval ranks the current version of a fact.",
+      retrieval: "Semantic, BM25 keyword and entity matches scored in parallel and fused, with temporal ranking. BM25 needs the mem0ai[nlp] extra in open source.",
+      scope: "user_id, agent_id and run_id on every memory."
+    },
+    backends: {
+      count: 25, def: "Qdrant, local files",
+      vector: [["Qdrant", "def"], ["pgvector"], ["Chroma"], ["Pinecone"], ["Weaviate"], ["Milvus"], ["MongoDB"], ["Redis"], ["Valkey"], ["Elasticsearch"], ["OpenSearch"], ["Supabase"], ["FAISS"], ["Cassandra"], ["Azure AI Search"], ["Azure MySQL"], ["Databricks"], ["Vertex AI Vector Search"], ["Neptune Analytics"], ["S3 Vectors"], ["Turbopuffer"], ["Upstash Vector"], ["Oracle AI Vector Search"], ["Baidu VectorDB"], ["LangChain", "wrapper"]],
+      graph: "No separate graph database in the current open-source release; entities live in their own vector collection.",
+      meta: "SQLite history log. The self-hosted server runs on Postgres with pgvector."
+    },
+    api: {
+      remember: { lvl: 2, calls: ["m.add(messages, user_id=…)"], note: "infer=False skips extraction." },
+      recall: { lvl: 2, calls: ["m.search(query, filters={\"user_id\": …})"], note: "Also get(id) and get_all(filters)." },
+      improve: { lvl: 1, calls: ["m.update(memory_id, data)"], note: "Manual edits only; extraction is add-only with no enrichment pass." },
+      forget: { lvl: 2, calls: ["m.delete(memory_id)", "m.delete_all(user_id=…)", "m.reset()"], note: "history(memory_id) shows past versions." }
+    },
+    setup: {
+      effort: 1,
+      first: ["npm install -g @mem0/cli", "mem0 init --agent", 'mem0 add "…"', 'mem0 search "…"'],
+      nokey: "Hosted Platform only",
+      local: "None for the library: pip install mem0ai with embedded Qdrant files. An LLM key is still required.",
+      prod: "Self-hosted server via docker compose (make bootstrap) with Postgres + pgvector and API keys; auth on by default.",
+      managed: "Mem0 Platform",
+      agents: "CLI with agent sign-up, agent skills for Claude Code, Codex and Cursor, Hermes memory plugin, LangGraph, CrewAI"
+    }
+  },
+  {
+    id: "zep", name: "Zep", maker: "Zep AI", color: "var(--s4)",
+    model: "Temporal knowledge graph (Graphiti) run as a managed service",
+    license: "Commercial cloud; Graphiti engine Apache-2.0", release: { v: "3.30.0", date: "2026-09-24", extra: "Graphiti 0.30.2" },
+    status: { kind: "managed", label: "Active, cloud only" },
+    pipeline: {
+      steps: [
+        "thread.add_messages() or graph.add() records an episode",
+        "Extract entities and resolve them against existing nodes",
+        "Extract facts as edges with valid-from and valid-to times",
+        "Invalidate older facts the new episode contradicts",
+        "Index for hybrid search, keeping provenance back to each episode"
+      ],
+      llm: "Zep runs extraction in its cloud, so no model key of your own. Self-hosted Graphiti needs an LLM with structured output.",
+      change: "Facts are bi-temporal: a superseded fact is invalidated, not deleted, so you can ask what was true at any point in time.",
+      retrieval: "Semantic embeddings, BM25 keyword and graph traversal. thread.get_user_context() returns a ready-made context block.",
+      scope: "Users, threads, and standalone graphs keyed by graph_id."
+    },
+    backends: {
+      count: 4, def: "Zep's own Context Graph Engine (managed)",
+      vector: [["Neo4j 5.26"], ["FalkorDB 1.1.2 / FalkorDB Lite"], ["Amazon Neptune + OpenSearch Serverless"], ["Kuzu 0.11.2", "deprecated"]],
+      graph: "Zep Cloud uses a proprietary graph engine. With Graphiti the graph database also stores the embeddings.",
+      meta: "Zep stores users, threads and messages. With Graphiti you build that layer yourself."
+    },
+    api: {
+      remember: { lvl: 2, calls: ["zep.thread.add_messages(thread_id, messages=…)", "zep.graph.add(user_id=…, type=\"text\", data=…)"], note: "Graphiti: add_episode() · add_episode_bulk()." },
+      recall: { lvl: 2, calls: ["zep.thread.get_user_context(thread_id)", "zep.graph.search(user_id=…, query=…)"], note: "Graphiti: search() · search_()." },
+      improve: { lvl: 1, calls: ["automatic on ingest", "zep.graph.add_custom_instructions(…)"], note: "Fact invalidation and summaries happen as data arrives; there is no enrich call." },
+      forget: { lvl: 2, calls: ["zep.graph.episode.delete(uuid)", "zep.graph.edge.delete(uuid)", "zep.user.delete(user_id)"], note: "Graphiti: remove_episode()." }
+    },
+    setup: {
+      effort: 2,
+      first: ["pip install zep-cloud", "zep.user.add(user_id=…)", "zep.thread.create(thread_id, user_id)", "zep.thread.add_messages(…)"],
+      nokey: "Yes; Zep runs the models",
+      local: "Nothing to run; it is a hosted API. Memory data lives in Zep's cloud.",
+      prod: "Community Edition is deprecated. Self-hosting means Graphiti plus Neo4j, FalkorDB or Neptune, and your own user, thread and auth layer.",
+      managed: "Zep Cloud, or deployed in your cloud",
+      agents: "Python, TypeScript and Go SDKs; LangGraph, CrewAI, Google ADK, AutoGen, Pydantic AI, Mastra, Vercel AI SDK; plugins for Claude Code, Codex and Cursor"
+    }
+  },
+  {
+    id: "graphrag", name: "GraphRAG", maker: "Microsoft Research", color: "var(--s5)",
+    model: "Batch-built entity graph with hierarchical community summaries",
+    license: "MIT", release: { v: "3.3.0", date: "2026-10-08" },
+    status: { kind: "maint", label: "Maintenance mode" },
+    pipeline: {
+      steps: [
+        "Load input documents and split them into text units",
+        "Extract entities and relationships with an LLM, or with NLP noun-phrase extraction",
+        "Optionally extract claims (covariates)",
+        "Cluster the graph into hierarchical communities (Leiden)",
+        "Write an LLM report for every community",
+        "Embed text units, entities and reports; write Parquet tables"
+      ],
+      llm: "Yes. Community reports always need an LLM, and the docs warn that indexing is expensive.",
+      change: "graphrag update merges new documents into an existing index and refreshes affected communities. There is no per-fact edit or delete.",
+      retrieval: "Local (entity neighbourhood), global (map-reduce over community reports), DRIFT (combines both) and basic vector search.",
+      scope: "One index per project root; no built-in users or sessions."
+    },
+    backends: {
+      count: 3, def: "LanceDB",
+      vector: [["LanceDB", "def"], ["Azure AI Search"], ["Azure Cosmos DB"]],
+      graph: "Parquet tables for entities, relationships, communities and reports, on local files or blob storage.",
+      meta: "Parquet outputs plus an LLM response cache. Custom vector stores plug in through a factory."
+    },
+    api: {
+      remember: { lvl: 1, calls: ["graphrag index --root ./project", "graphrag update --root ./project"], note: "Batch jobs over an input folder, not per-message writes." },
+      recall: { lvl: 2, calls: ["graphrag query --method local|global|drift|basic \"…\""], note: "Also graphrag.api.query from Python." },
+      improve: { lvl: 1, calls: ["graphrag prompt-tune"], note: "Tunes extraction prompts to your domain; community reports refresh on update." },
+      forget: { lvl: 0, calls: [], note: "No delete API. Remove source documents and re-index." }
+    },
+    setup: {
+      effort: 4,
+      first: ["pip install graphrag", "graphrag init --root ./project", "graphrag index --root ./project", "graphrag query --method local \"…\""],
+      nokey: "No",
+      local: "No services; Parquet and LanceDB files. Prompt tuning is recommended before indexing.",
+      prod: "Azure AI Search or Cosmos DB for vectors. No per-user memory or write-per-message API, and the project accepts no new features.",
+      managed: "None",
+      agents: "CLI and Python API only"
+    }
+  }
+];
+
+// Vendor-reported results on other benchmarks, shown for context.
+const OTHER = [
+  { fw: "cognee", bench: "BEAM, 100K tokens", score: "0.79", note: "LLM-judge score (0–1); 20 questions from one held-out conversation, four rounds.", src: "Cognee README, Oct 2026" },
+  { fw: "cognee", bench: "BEAM, 10M tokens", score: "0.67", note: "Exploratory; routing selected and scored on the same questions.", src: "Cognee README, Oct 2026" },
+  { fw: "hindsight", bench: "LongMemEval", score: "91.4%", note: "With a larger backbone; 83.6% with an open-source 20B model (full-context baseline 39%).", src: "arXiv 2512.12818" },
+  { fw: "mem0", bench: "LongMemEval", score: "94.4", note: "Mem0 Platform, April 2026 algorithm, single-pass retrieval at top_200. Open source is expected to score lower.", src: "Mem0 README" },
+  { fw: "mem0", bench: "LoCoMo", score: "92.5", note: "Same setup as above.", src: "Mem0 README" },
+  { fw: "mem0", bench: "BEAM, 1M tokens", score: "64.1", note: "Same setup as above.", src: "Mem0 README" },
+  { fw: "zep", bench: "LongMemEval", score: "71.2%", note: "GPT-4o; full-context baseline 63.8%.", src: "arXiv 2501.13956, Jan 2025" },
+  { fw: "zep", bench: "Deep Memory Retrieval", score: "94.8%", note: "Against 93.4% for MemGPT.", src: "arXiv 2501.13956, Jan 2025" },
+  { fw: "graphrag", bench: "None for agent memory", score: "—", note: "GraphRAG's paper evaluates global sensemaking questions over a corpus, not conversational memory.", src: "arXiv 2404.16130" }
+];
+
+/* ---------- Helpers ---------- */
+
+const SVGNS = "http://www.w3.org/2000/svg";
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  setAttrs(el, attrs);
+  append(el, kids);
+  return el;
+}
+function sv(tag, attrs, ...kids) {
+  const el = document.createElementNS(SVGNS, tag);
+  setAttrs(el, attrs);
+  append(el, kids);
+  return el;
+}
+function setAttrs(el, attrs) {
+  if (!attrs) return;
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k === "class") el.setAttribute("class", v);
+    else if (k === "text") el.textContent = v;
+    else if (k.startsWith("on") && typeof v === "function") el.addEventListener(k.slice(2), v);
+    else el.setAttribute(k, v === true ? "" : String(v));
+  }
+}
+function append(el, kids) {
+  for (const k of kids.flat(Infinity)) {
+    if (k == null || k === false) continue;
+    el.append(k.nodeType ? k : document.createTextNode(String(k)));
+  }
+}
+const fmtPct = (v) => v.toFixed(2) + "%";
+const fmtUsd = (v) => "$" + v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtSec = (v) => v.toFixed(1) + " s";
+const fmtDate = (iso) => new Date(iso + "T00:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+const rate = (r) => (r.passes / TESTS) * 100;
+const fwById = (id) => FW.find((f) => f.id === id);
+const apiFit = (f) => ["remember", "recall", "improve", "forget"].reduce((s, v) => s + f.api[v].lvl, 0);
+
+function compare(a, b, dir) {
+  if (a == null && b == null) return 0;
+  if (a == null) return 1;
+  if (b == null) return -1;
+  const c = typeof a === "string" ? a.localeCompare(b) : a - b;
+  return dir === "asc" ? c : -c;
+}
+
+function fwCell(f, sub) {
+  return h("div", { class: "fw" },
+    h("span", { class: "dot", style: "background:" + f.color, "aria-hidden": "true" }),
+    h("span", { class: "name", text: f.name }),
+    sub ? h("span", { class: "sub", text: sub }) : null);
+}
+function pips(n, max, label) {
+  const wrap = h("span", { class: "pips", role: "img", "aria-label": label || n + " of " + max });
+  for (let i = 0; i < max; i++) wrap.append(h("i", { class: i < n ? "on" : null }));
+  return wrap;
+}
+function dbar(value, max) {
+  const pct = Math.max(0, Math.min(100, (value / max) * 100));
+  return h("span", { class: "dbar", "aria-hidden": "true" }, h("span", { style: "width:" + pct.toFixed(1) + "%" }));
+}
+function statusPill(s) {
+  const cls = s.kind === "active" ? "st-active" : s.kind === "maint" ? "st-maint" : "st-managed";
+  return h("span", { class: "status " + cls, text: s.label });
+}
+function chips(list, limit) {
+  const box = h("div", { class: "chips" });
+  const make = ([name, kind]) => {
+    const extra = kind === "def" ? " (default)" : kind ? " (" + kind + ")" : "";
+    return h("span", { class: "chip" + (kind === "def" ? " def" : kind ? " dim" : ""), text: name + extra });
+  };
+  const shown = limit && list.length > limit ? list.slice(0, limit) : list;
+  shown.forEach((c) => box.append(make(c)));
+  if (shown.length < list.length) {
+    const rest = list.slice(shown.length);
+    const btn = h("button", { type: "button", class: "chip-more", "aria-expanded": "false", text: "+" + rest.length + " more" });
+    btn.addEventListener("click", () => {
+      btn.replaceWith(...rest.map(make));
+    });
+    box.append(btn);
+  }
+  return box;
+}
+
+/* ---------- State ---------- */
+
+const STORE_KEY = "memory-framework-matrix:v1";
+const state = { run: "luna", order: "dolphin" };
+try {
+  const saved = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
+  if (saved && RUNS.some((r) => r.id === saved.run)) state.run = saved.run;
+  if (saved && saved.order) state.order = saved.order;
+} catch (e) { /* storage unavailable: keep defaults */ }
+function save() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
+}
+
+const curRun = () => RUNS.find((r) => r.id === state.run);
+const fwResult = (id, run) => (run || curRun()).systems.find((s) => s.sys === id) || null;
+
+const ORDERS = {
+  dolphin: { label: "DolphinBench pass rate, best first", value: (f) => { const r = fwResult(f.id); return r ? r.passes : null; }, dir: "desc" },
+  cost: { label: "DolphinBench total cost, lowest first", value: (f) => { const r = fwResult(f.id); return r ? r.total : null; }, dir: "asc" },
+  api: { label: "API fit, best first", value: apiFit, dir: "desc" },
+  setup: { label: "Setup effort, easiest first", value: (f) => f.setup.effort, dir: "asc" },
+  backends: { label: "Vector store choices, most first", value: (f) => f.backends.count, dir: "desc" },
+  release: { label: "Latest release, newest first", value: (f) => f.release.date, dir: "desc" },
+  name: { label: "Name, A to Z", value: (f) => f.name.toLowerCase(), dir: "asc" }
+};
+if (!ORDERS[state.order]) state.order = "dolphin";
+
+function orderedFrameworks() {
+  const o = ORDERS[state.order];
+  return [...FW].sort((a, b) => compare(o.value(a), o.value(b), o.dir) || a.name.localeCompare(b.name));
+}
+
+/* ---------- Sortable table ---------- */
+
+const fwTables = [];
+function makeTable(host, cfg) {
+  const t = { key: cfg.initialKey || null, dir: cfg.initialDir || null };
+  const table = h("table", { class: "grid" });
+  const thead = h("thead");
+  const tbody = h("tbody");
+  const headRow = h("tr");
+  const ths = cfg.columns.map((col) => {
+    const th = h("th", { scope: "col", class: col.num ? "num" : null });
+    if (col.sort) {
+      const btn = h("button", { type: "button", class: "sort", title: "Sort by " + col.label.toLowerCase() },
+        h("span", { text: col.label }), h("span", { class: "sort-ind", "aria-hidden": "true" }));
+      btn.addEventListener("click", () => {
+        if (t.key === col.key) t.dir = t.dir === "asc" ? "desc" : "asc";
+        else { t.key = col.key; t.dir = col.dir || "desc"; }
+        render();
+      });
+      th.append(btn);
+    } else {
+      th.append(h("span", { text: col.label }));
+    }
+    headRow.append(th);
+    return th;
+  });
+  thead.append(headRow);
+  table.append(h("caption", { class: "sr-only", text: cfg.caption }), thead, tbody);
+  host.replaceChildren(h("div", { class: "table-wrap", role: "region", tabindex: "0", "aria-label": cfg.caption }, table));
+
+  function render() {
+    let rows = cfg.rows();
+    if (t.key) {
+      const col = cfg.columns.find((c) => c.key === t.key);
+      rows = [...rows].sort((a, b) => compare(col.sort(a), col.sort(b), t.dir) || (cfg.tiebreak ? cfg.tiebreak(a, b) : 0));
+    }
+    cfg.columns.forEach((col, i) => {
+      if (!col.sort) return;
+      ths[i].setAttribute("aria-sort", t.key === col.key ? (t.dir === "asc" ? "ascending" : "descending") : "none");
+    });
+    tbody.replaceChildren(...rows.map((row) => {
+      const tr = h("tr", cfg.rowAttrs ? cfg.rowAttrs(row) : null);
+      cfg.columns.forEach((col) => {
+        const cls = [col.num ? "num" : "", col.cls || ""].join(" ").trim() || null;
+        const cell = col.header ? h("th", { scope: "row", class: cls }) : h("td", { class: cls });
+        append(cell, [col.cell(row)]);
+        tr.append(cell);
+      });
+      return tr;
+    }));
+  }
+  t.render = render;
+  t.reset = () => { t.key = null; t.dir = null; render(); };
+  render();
+  if (cfg.followsGlobalOrder) fwTables.push(t);
+  return t;
+}
+
+/* ---------- Controls ---------- */
+
+function buildControls() {
+  const seg = document.getElementById("run-seg");
+  RUNS.forEach((r) => {
+    const input = h("input", { type: "radio", name: "run", value: r.id, id: "run-" + r.id });
+    input.checked = r.id === state.run;
+    input.addEventListener("change", () => { state.run = r.id; save(); onRunChange(); });
+    seg.append(h("label", { for: "run-" + r.id }, input, h("span", { text: r.label })));
+  });
+  const sel = document.getElementById("order");
+  Object.entries(ORDERS).forEach(([k, o]) => sel.append(h("option", { value: k, text: o.label })));
+  sel.value = state.order;
+  sel.addEventListener("change", () => { state.order = sel.value; save(); applyGlobalOrder(); });
+  document.getElementById("rail").addEventListener("submit", (e) => e.preventDefault());
+}
+
+function applyGlobalOrder() {
+  fwTables.forEach((t) => t.reset());
+  renderLanes();
+  renderOtherBench();
+}
+
+function onRunChange() {
+  renderFindings();
+  renderRunMeta();
+  renderScatter();
+  runsTable.render();
+  renderNotRun();
+  if (state.order === "dolphin" || state.order === "cost") applyGlobalOrder();
+  else overviewTable.render();
+}
+
+/* ---------- Findings ---------- */
+
+function renderFindings() {
+  const run = curRun();
+  const measured = FW.map((f) => ({ f, r: fwResult(f.id, run) })).filter((x) => x.r);
+  const best = [...measured].sort((a, b) => b.r.passes - a.r.passes)[0];
+  const cheapest = [...measured].sort((a, b) => a.r.total - b.r.total)[0];
+  const topOverall = [...run.systems].sort((a, b) => b.passes - a.passes)[0];
+  const missing = FW.filter((f) => !fwResult(f.id, run)).map((f) => f.name);
+
+  const tile = (label, value, note) => h("div", { class: "finding" },
+    h("span", { class: "label", text: label }), h("span", { class: "value", text: value }), h("span", { class: "note", text: note }));
+
+  let bestNote = best.f.name + ", " + best.r.passes + " of " + TESTS + " tasks on " + run.label + ".";
+  if (topOverall.sys !== best.r.sys && !fwById(topOverall.sys)) {
+    bestNote += " " + topOverall.name + ", outside this comparison, scored " + fmtPct(rate(topOverall)) + ".";
+  }
+  let costNote;
+  if (measured.length > 1) {
+    const other = measured.find((x) => x !== cheapest);
+    costNote = cheapest.f.name + ". Median task time " + fmtSec(cheapest.r.med) + " against " + fmtSec(other.r.med) + " for " + other.f.name + ".";
+  } else {
+    costNote = cheapest.f.name + " is the only framework in this comparison run on " + run.label + ".";
+  }
+  const listNames = (arr) => arr.length <= 2 ? arr.join(" and ") : arr.slice(0, -1).join(", ") + " and " + arr[arr.length - 1];
+  const coverNote = listNames(missing) + (missing.length === 1 ? " has" : " have") + " no official run in this configuration.";
+
+  document.getElementById("findings").replaceChildren(
+    tile("Best framework pass rate", fmtPct(rate(best.r)), bestNote),
+    tile("Lowest total cost among frameworks", fmtUsd(cheapest.r.total), costNote),
+    tile("Frameworks with an official run", measured.length + " of " + FW.length, coverNote)
+  );
+  document.getElementById("ov-run").textContent = run.label;
+}
+
+function renderRunMeta() {
+  const run = curRun();
+  document.getElementById("run-meta").textContent =
+    "Selected run: " + run.harness + " with " + run.model + ", recorded " + run.date + ". 3 personas × 200 tests, about 500K tokens of history each.";
+}
+
+function renderNotRun() {
+  const run = curRun();
+  const missing = FW.filter((f) => !fwResult(f.id, run));
+  const box = document.getElementById("not-run");
+  const intro = run.id === "claude"
+    ? "The Claude Code configuration was run with Built-in, Mem0 and Honcho only."
+    : "The paper pairs both Hermes models with Built-in, Mem0, Honcho, Hindsight and Supermemory.";
+  box.replaceChildren(
+    h("strong", { text: "Not evaluated on this run: " + missing.map((f) => f.name).join(", ") }),
+    h("span", { text: intro + " DolphinBench accepts outside submissions, so the missing frameworks can be added by running its harness." })
+  );
+}
+
+/* ---------- Overview ---------- */
+
+let overviewTable;
+function buildOverview() {
+  overviewTable = makeTable(document.getElementById("overview-table"), {
+    caption: "Framework overview",
+    followsGlobalOrder: true,
+    rows: orderedFrameworks,
+    tiebreak: (a, b) => a.name.localeCompare(b.name),
+    columns: [
+      { key: "name", label: "Framework", header: true, sort: (f) => f.name.toLowerCase(), dir: "asc", cell: (f) => fwCell(f, f.maker) },
+      { key: "model", label: "Memory model", cls: "wrap-model", cell: (f) => h("span", { class: "small", text: f.model }) },
+      { key: "rate", label: "Pass rate", num: true, sort: (f) => { const r = fwResult(f.id); return r ? r.passes : null; }, dir: "desc",
+        cell: (f) => { const r = fwResult(f.id); return r
+          ? h("div", { class: "stack" }, h("span", { text: fmtPct(rate(r)) }), dbar(rate(r), 100), h("span", { class: "muted small", text: r.passes + " / " + TESTS }))
+          : h("span", { class: "muted", text: "Not run" }); } },
+      { key: "cost", label: "Total cost", num: true, sort: (f) => { const r = fwResult(f.id); return r ? r.total : null; }, dir: "asc",
+        cell: (f) => { const r = fwResult(f.id); return r ? fmtUsd(r.total) : h("span", { class: "muted", text: "—" }); } },
+      { key: "lat", label: "Median latency", num: true, sort: (f) => { const r = fwResult(f.id); return r ? r.med : null; }, dir: "asc",
+        cell: (f) => { const r = fwResult(f.id); return r ? fmtSec(r.med) : h("span", { class: "muted", text: "—" }); } },
+      { key: "backends", label: "Vector choices", num: true, cls: "wrap-default", sort: (f) => f.backends.count, dir: "desc",
+        cell: (f) => h("div", { class: "stack" }, h("span", { text: String(f.backends.count) }), h("span", { class: "muted small", text: f.backends.def })) },
+      { key: "api", label: "API fit", num: true, sort: apiFit, dir: "desc",
+        cell: (f) => h("div", { class: "stack" }, h("span", { text: apiFit(f) + " / 12" }), dbar(apiFit(f), 12)) },
+      { key: "setup", label: "Setup effort", sort: (f) => f.setup.effort, dir: "asc",
+        cell: (f) => h("div", { class: "level" }, pips(f.setup.effort, 5, "Effort " + f.setup.effort + " of 5"), EFFORT_WORD[f.setup.effort]) },
+      { key: "license", label: "License", cls: "wrap-sm", sort: (f) => f.license.toLowerCase(), dir: "asc", cell: (f) => h("span", { class: "small", text: f.license }) },
+      { key: "release", label: "Latest release", sort: (f) => f.release.date, dir: "desc",
+        cell: (f) => h("div", { class: "stack" }, h("span", { class: "mono", text: "v" + f.release.v }),
+          h("span", { class: "muted small", text: fmtDate(f.release.date) + (f.release.extra ? " · " + f.release.extra : "") })) },
+      { key: "status", label: "Status", sort: (f) => f.status.label, dir: "asc", cell: (f) => statusPill(f.status) }
+    ]
+  });
+}
+
+/* ---------- DolphinBench runs table ---------- */
+
+let runsTable;
+function runRows() {
+  const run = curRun();
+  const base = run.systems.find((s) => s.sys === "builtin");
+  return run.systems.map((s) => ({ ...s, rate: rate(s), lift: s.sys === "builtin" ? null : rate(s) - rate(base), cpp: s.total / s.passes, fw: fwById(s.sys) }));
+}
+function buildRunsTable() {
+  runsTable = makeTable(document.getElementById("runs-table"), {
+    caption: "DolphinBench official runs for the selected configuration",
+    rows: runRows,
+    initialKey: "passes", initialDir: "desc",
+    tiebreak: (a, b) => a.name.localeCompare(b.name),
+    rowAttrs: (r) => ({ class: r.fw ? null : "ref" }),
+    columns: [
+      { key: "name", label: "Memory system", header: true, sort: (r) => r.name.toLowerCase(), dir: "asc",
+        cell: (r) => r.fw ? fwCell(r.fw, null)
+          : h("div", { class: "fw" }, h("span", { class: "ring", "aria-hidden": "true" }), h("span", { class: "name muted", text: r.name }),
+            h("span", { class: "sub", text: r.sys === "builtin" ? "Harness's own memory, the baseline" : "Reference, not in this comparison" })) },
+      { key: "passes", label: "Passed", num: true, sort: (r) => r.passes, dir: "desc", cell: (r) => r.passes + " / " + TESTS },
+      { key: "rate", label: "Pass rate", num: true, sort: (r) => r.rate, dir: "desc",
+        cell: (r) => h("div", { class: "stack" }, h("span", { text: fmtPct(r.rate) }), dbar(r.rate, 100)) },
+      { key: "lift", label: "Lift vs built-in", num: true, sort: (r) => r.lift, dir: "desc",
+        cell: (r) => r.lift == null ? h("span", { class: "muted", text: "baseline" }) : (r.lift >= 0 ? "+" : "−") + Math.abs(r.lift).toFixed(2) + " pp" },
+      { key: "total", label: "Total cost", num: true, sort: (r) => r.total, dir: "asc", cell: (r) => fmtUsd(r.total) },
+      { key: "memory", label: "Memory processing", num: true, sort: (r) => r.memory, dir: "asc", cell: (r) => fmtUsd(r.memory) },
+      { key: "cpp", label: "Cost per pass", num: true, sort: (r) => r.cpp, dir: "asc", cell: (r) => fmtUsd(r.cpp) },
+      { key: "med", label: "Median latency", num: true, sort: (r) => r.med, dir: "asc", cell: (r) => fmtSec(r.med) },
+      { key: "p95", label: "p95 latency", num: true, sort: (r) => r.p95, dir: "asc", cell: (r) => fmtSec(r.p95) },
+      { key: "morgan", label: "Morgan", num: true, sort: (r) => r.morgan, dir: "desc", cell: (r) => r.morgan + " / 200" },
+      { key: "alex", label: "Alex", num: true, sort: (r) => r.alex, dir: "desc", cell: (r) => r.alex + " / 200" },
+      { key: "riley", label: "Riley", num: true, sort: (r) => r.riley, dir: "desc", cell: (r) => r.riley + " / 200" }
+    ]
+  });
+}
+
+/* ---------- Scatter: pass rate vs total cost ---------- */
+
+function niceStep(span, count) {
+  const raw = span / Math.max(1, count);
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const norm = raw / mag;
+  const step = norm >= 5 ? 5 : norm >= 2 ? 2 : 1;
+  return step * mag;
+}
+function ticks(min, max, count) {
+  const step = niceStep(max - min, count);
+  const out = [];
+  for (let v = Math.ceil(min / step) * step; v <= max + step * 1e-9; v += step) out.push(+v.toFixed(10));
+  return out;
+}
+const fmtTickUsd = (v) => v >= 1000 ? "$" + (v / 1000).toFixed(v % 1000 === 0 ? 0 : 1) + "K" : "$" + v;
+
+function frontier(points) {
+  const sorted = [...points].sort((a, b) => a.total - b.total || b.rate - a.rate);
+  const out = [];
+  let best = -Infinity;
+  for (const p of sorted) if (p.rate > best) { out.push(p); best = p.rate; }
+  return out;
+}
+
+function renderScatter() {
+  const host = document.getElementById("scatter");
+  const tip = document.getElementById("tip");
+  tip.hidden = true;
+  const run = curRun();
+  const pts = run.systems.map((s) => ({ ...s, rate: rate(s), fw: fwById(s.sys) }));
+  const W = Math.max(300, Math.round(host.clientWidth || 640));
+  const narrow = W < 520;
+  const H = narrow ? 300 : 340;
+  const m = { l: 50, r: narrow ? 14 : 24, t: 14, b: 50 };
+  const iw = W - m.l - m.r;
+  const ih = H - m.t - m.b;
+
+  const maxCost = Math.max(...pts.map((p) => p.total));
+  const xTicks = ticks(0, maxCost * 1.06, narrow ? 4 : 6);
+  const xMax = Math.max(xTicks[xTicks.length - 1], maxCost);
+  const rates = pts.map((p) => p.rate);
+  const yMin = Math.max(0, Math.floor((Math.min(...rates) - 4) / 5) * 5);
+  const yMaxRaw = Math.min(100, Math.ceil((Math.max(...rates) + 3) / 5) * 5);
+  const yTicks = ticks(yMin, yMaxRaw, 5);
+  const yMax = Math.max(yTicks[yTicks.length - 1], yMaxRaw);
+  const x = (v) => m.l + (v / xMax) * iw;
+  const y = (v) => m.t + ih - ((v - yMin) / (yMax - yMin)) * ih;
+
+  const svg = sv("svg", { viewBox: "0 0 " + W + " " + H, width: W, height: H, "aria-hidden": "true" });
+  const ax = sv("g", { class: "ax" });
+  yTicks.forEach((v) => {
+    ax.append(sv("line", { class: v === yMin ? "baseline" : "gridline", x1: m.l, x2: m.l + iw, y1: y(v), y2: y(v) }));
+    ax.append(sv("text", { x: m.l - 8, y: y(v) + 4, "text-anchor": "end" }, v + "%"));
+  });
+  xTicks.forEach((v) => {
+    if (v > xMax) return;
+    ax.append(sv("line", { class: v === 0 ? "baseline" : "gridline", x1: x(v), x2: x(v), y1: m.t, y2: m.t + ih }));
+    ax.append(sv("text", { x: x(v), y: m.t + ih + 18, "text-anchor": "middle" }, fmtTickUsd(v)));
+  });
+  ax.append(sv("text", { class: "ax-title", x: m.l + iw / 2, y: H - 8, "text-anchor": "middle" }, "Total run cost, USD (ingestion and all 600 tests)"));
+  ax.append(sv("text", { class: "ax-title", x: 12, y: m.t + ih / 2, "text-anchor": "middle", transform: "rotate(-90 12 " + (m.t + ih / 2) + ")" }, "Pass rate"));
+  svg.append(ax);
+
+  const fr = frontier(pts);
+  const obstacles = [];
+  if (fr.length > 1) {
+    let d = "M" + x(fr[0].total) + "," + y(fr[0].rate);
+    for (let i = 1; i < fr.length; i++) {
+      const x0 = x(fr[i - 1].total), y0 = y(fr[i - 1].rate), x1 = x(fr[i].total), y1 = y(fr[i].rate);
+      d += " H" + x1 + " V" + y1;
+      obstacles.push({ x: x0, y: y0 - 2, w: x1 - x0, h: 4 }, { x: x1 - 2, y: y1, w: 4, h: y0 - y1 });
+    }
+    svg.append(sv("path", { class: "frontier", d }));
+  }
+
+  const marks = sv("g");
+  const labels = sv("g");
+  svg.append(marks, labels);
+  host.replaceChildren(svg);
+
+  // Reference systems first so framework marks sit on top.
+  const order = [...pts].sort((a, b) => (a.fw ? 1 : 0) - (b.fw ? 1 : 0));
+  const placed = order.map((p) => ({ x: x(p.total) - 7, y: y(p.rate) - 7, w: 14, h: 14 })).concat(obstacles);
+  order.forEach((p) => {
+    const cx = x(p.total), cy = y(p.rate);
+    const g = sv("g", { class: "pt", tabindex: "0", role: "button", "aria-label": p.name + ": " + fmtPct(p.rate) + ", " + fmtUsd(p.total) });
+    g.append(sv("circle", { cx, cy, r: 14, fill: "transparent" }));
+    if (p.fw) g.append(sv("circle", { class: "pt-mark", cx, cy, r: 6, style: "fill:" + p.fw.color + ";stroke:var(--surface);stroke-width:2" }));
+    else g.append(sv("circle", { class: "pt-mark", cx, cy, r: 5, style: "fill:var(--surface);stroke:var(--muted);stroke-width:2" }));
+    const show = () => showTip(p, cx, cy, W);
+    g.addEventListener("pointerenter", show);
+    g.addEventListener("focus", show);
+    g.addEventListener("pointerleave", hideTip);
+    g.addEventListener("blur", hideTip);
+    marks.append(g);
+
+    const t = sv("text", { class: "pt-label" + (p.fw ? "" : " ref"), x: cx, y: cy }, p.name + " " + p.rate.toFixed(1) + "%");
+    labels.append(t);
+    const bb = t.getBBox();
+    const cands = [
+      [cx + 10, cy + bb.height / 3, "start"],
+      [cx - 10, cy + bb.height / 3, "end"],
+      [cx, cy - 12, "middle"],
+      [cx, cy + bb.height + 8, "middle"],
+      [cx + 8, cy - 10, "start"],
+      [cx - 8, cy + bb.height + 6, "end"]
+    ];
+    let chosen = cands[0];
+    let box;
+    for (const c of cands) {
+      const bx = c[2] === "start" ? c[0] : c[2] === "end" ? c[0] - bb.width : c[0] - bb.width / 2;
+      const by = c[1] - bb.height * 0.8;
+      const candidate = { x: bx - 2, y: by - 1, w: bb.width + 4, h: bb.height + 2 };
+      const inside = candidate.x >= 2 && candidate.x + candidate.w <= W - 2 && candidate.y >= 0 && candidate.y + candidate.h <= m.t + ih;
+      const clash = placed.some((r) => !(candidate.x + candidate.w < r.x || r.x + r.w < candidate.x || candidate.y + candidate.h < r.y || r.y + r.h < candidate.y));
+      if (inside && !clash) { chosen = c; box = candidate; break; }
+    }
+    t.setAttribute("x", chosen[0]);
+    t.setAttribute("y", chosen[1]);
+    t.setAttribute("text-anchor", chosen[2]);
+    if (box) placed.push(box);
+  });
+
+  function showTip(p, cx, cy, width) {
+    tip.replaceChildren(
+      h("strong", { text: fmtPct(p.rate) }),
+      h("span", { class: "tip-name" },
+        h("span", { class: "tip-key", style: "background:" + (p.fw ? p.fw.color : "var(--muted)") }), p.name),
+      h("span", { text: p.passes + " of " + TESTS + " tests passed" }),
+      h("span", { text: fmtUsd(p.total) + " total, " + fmtUsd(p.memory) + " memory processing" }),
+      h("span", { text: fmtSec(p.med) + " median, " + fmtSec(p.p95) + " p95" })
+    );
+    tip.hidden = false;
+    const card = host.parentElement;
+    const scale = host.clientWidth / width;
+    const left = host.offsetLeft + cx * scale;
+    const top = host.offsetTop + cy * scale;
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+    let lx = left + 14;
+    if (lx + tw > card.clientWidth - 6) lx = left - tw - 14;
+    let ly = top - th - 10;
+    if (ly < 4) ly = top + 14;
+    tip.style.left = Math.max(4, lx) + "px";
+    tip.style.top = ly + "px";
+  }
+  function hideTip() { tip.hidden = true; }
+}
+
+/* ---------- Other benchmarks ---------- */
+
+function renderOtherBench() {
+  const order = orderedFrameworks().map((f) => f.id);
+  const rows = [...OTHER].sort((a, b) => order.indexOf(a.fw) - order.indexOf(b.fw));
+  const table = h("table", { class: "grid" },
+    h("caption", { class: "sr-only", text: "Vendor-reported results on other benchmarks" }),
+    h("thead", null, h("tr", null,
+      h("th", { scope: "col", text: "Framework" }), h("th", { scope: "col", text: "Benchmark" }),
+      h("th", { scope: "col", class: "num", text: "Reported" }), h("th", { scope: "col", text: "Conditions" }), h("th", { scope: "col", text: "Source" }))),
+    h("tbody", null, rows.map((r) => {
+      const f = fwById(r.fw);
+      return h("tr", null,
+        h("th", { scope: "row" }, fwCell(f, null)),
+        h("td", { text: r.bench }),
+        h("td", { class: "num", text: r.score }),
+        h("td", { class: "wrap-lg small", text: r.note }),
+        h("td", { class: "small muted", text: r.src }));
+    })));
+  document.getElementById("other-bench").replaceChildren(h("div", { class: "table-wrap", role: "region", tabindex: "0", "aria-label": "Vendor-reported results" }, table));
+}
+
+/* ---------- Pipelines ---------- */
+
+function renderLanes() {
+  const host = document.getElementById("lanes");
+  host.replaceChildren(...orderedFrameworks().map((f) => {
+    const p = f.pipeline;
+    return h("article", { class: "lane", "aria-label": f.name + " pipeline" },
+      h("div", { class: "lane-head" },
+        h("div", { class: "title" }, h("span", { class: "dot", style: "background:" + f.color, "aria-hidden": "true" }), h("h3", { text: f.name })),
+        h("p", { text: f.model })),
+      h("div", { class: "lane-body" },
+        h("ol", { class: "steps" }, p.steps.map((s) => h("li", null, h("span", { text: s })))),
+        h("dl", { class: "facts" },
+          h("div", null, h("dt", { text: "Needs an LLM to write" }), h("dd", { text: p.llm })),
+          h("div", null, h("dt", { text: "When facts change" }), h("dd", { text: p.change })),
+          h("div", null, h("dt", { text: "Retrieval" }), h("dd", { text: p.retrieval })),
+          h("div", null, h("dt", { text: "Memory scope" }), h("dd", { text: p.scope })))));
+  }));
+}
+
+/* ---------- Backends ---------- */
+
+function buildBackends() {
+  makeTable(document.getElementById("backends-table"), {
+    caption: "Vector database backends",
+    followsGlobalOrder: true,
+    rows: orderedFrameworks,
+    tiebreak: (a, b) => a.name.localeCompare(b.name),
+    columns: [
+      { key: "name", label: "Framework", header: true, sort: (f) => f.name.toLowerCase(), dir: "asc", cell: (f) => fwCell(f, null) },
+      { key: "count", label: "Choices", num: true, sort: (f) => f.backends.count, dir: "desc",
+        cell: (f) => h("div", { class: "stack" }, h("span", { text: String(f.backends.count) }), dbar(f.backends.count, 25)) },
+      { key: "def", label: "Default", cls: "wrap-sm", sort: (f) => f.backends.def.toLowerCase(), dir: "asc", cell: (f) => f.backends.def },
+      { key: "vector", label: "Vector-capable stores", cls: "wrap-lg", cell: (f) => h("div", { class: "stack" },
+          f.id === "zep" ? h("span", { class: "muted small", text: "Zep Cloud: no choice. Graphiti, self-hosted:" }) : null,
+          chips(f.backends.vector, 8)) },
+      { key: "graph", label: "Graph and structure", cls: "wrap-md", cell: (f) => h("span", { class: "small", text: f.backends.graph }) },
+      { key: "meta", label: "Metadata and history", cls: "wrap-md", cell: (f) => h("span", { class: "small", text: f.backends.meta }) }
+    ]
+  });
+}
+
+/* ---------- API ---------- */
+
+function verbCell(v) {
+  return h("div", null,
+    h("div", { class: "level" }, pips(v.lvl, 3, LEVEL_WORD[v.lvl] + ", " + v.lvl + " of 3"), LEVEL_WORD[v.lvl]),
+    v.calls.length ? h("div", { class: "calls" }, v.calls.map((c) => h("code", { text: c }))) : null,
+    v.note ? h("div", { class: "cell-note", text: v.note }) : null);
+}
+function buildApi() {
+  const verbCol = (verb) => ({ key: verb, label: verb, cls: "wrap-md", sort: (f) => f.api[verb].lvl, dir: "desc", cell: (f) => verbCell(f.api[verb]) });
+  makeTable(document.getElementById("api-table"), {
+    caption: "API coverage of remember, recall, improve and forget",
+    followsGlobalOrder: true,
+    rows: orderedFrameworks,
+    tiebreak: (a, b) => apiFit(b) - apiFit(a) || a.name.localeCompare(b.name),
+    columns: [
+      { key: "name", label: "Framework", header: true, sort: (f) => f.name.toLowerCase(), dir: "asc", cell: (f) => fwCell(f, null) },
+      verbCol("remember"), verbCol("recall"), verbCol("improve"), verbCol("forget"),
+      { key: "fit", label: "Fit", num: true, sort: apiFit, dir: "desc",
+        cell: (f) => h("div", { class: "stack" }, h("span", { text: apiFit(f) + " / 12" }), dbar(apiFit(f), 12)) }
+    ]
+  });
+}
+
+/* ---------- Setup ---------- */
+
+function buildSetup() {
+  makeTable(document.getElementById("setup-table"), {
+    caption: "Setup complexity for agentic apps",
+    followsGlobalOrder: true,
+    rows: orderedFrameworks,
+    tiebreak: (a, b) => a.name.localeCompare(b.name),
+    columns: [
+      { key: "name", label: "Framework", header: true, sort: (f) => f.name.toLowerCase(), dir: "asc", cell: (f) => fwCell(f, null) },
+      { key: "effort", label: "Effort", sort: (f) => f.setup.effort, dir: "asc",
+        cell: (f) => h("div", { class: "level" }, pips(f.setup.effort, 5, "Effort " + f.setup.effort + " of 5"), f.setup.effort + " · " + EFFORT_WORD[f.setup.effort]) },
+      { key: "first", label: "Fastest path to a first memory", cls: "wrap-lg",
+        cell: (f) => h("div", { class: "codeblock calls" }, h("code", { text: f.setup.first.join("\n") })) },
+      { key: "nokey", label: "Without your own LLM key", cls: "wrap-sm", cell: (f) => h("span", { class: "small", text: f.setup.nokey }) },
+      { key: "local", label: "Local footprint", cls: "wrap-md", cell: (f) => h("span", { class: "small", text: f.setup.local }) },
+      { key: "prod", label: "Production self-hosting", cls: "wrap-md", cell: (f) => h("span", { class: "small", text: f.setup.prod }) },
+      { key: "managed", label: "Managed option", cls: "wrap-sm", cell: (f) => h("span", { class: "small", text: f.setup.managed }) },
+      { key: "agents", label: "Agent integrations", cls: "wrap-md", cell: (f) => h("span", { class: "small", text: f.setup.agents }) }
+    ]
+  });
+}
+
+/* ---------- Boot ---------- */
+
+buildControls();
+renderFindings();
+renderRunMeta();
+buildOverview();
+buildRunsTable();
+renderNotRun();
+renderOtherBench();
+renderLanes();
+buildBackends();
+buildApi();
+buildSetup();
+renderScatter();
+
+let resizeFrame = 0;
+let lastWidth = 0;
+const scatterHost = document.getElementById("scatter");
+if ("ResizeObserver" in window) {
+  new ResizeObserver(() => {
+    const w = Math.round(scatterHost.clientWidth);
+    if (w === lastWidth) return;
+    lastWidth = w;
+    cancelAnimationFrame(resizeFrame);
+    resizeFrame = requestAnimationFrame(renderScatter);
+  }).observe(scatterHost);
+}
+</script>
+</body>
+</html>
