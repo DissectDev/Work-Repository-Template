@@ -11,6 +11,7 @@
 | 检查一份决策是否说清楚 | [七问评审](docs/guides/adr-review.md) |
 | 查找已经作出的决策 | [决策目录](docs/decisions/README.md) |
 | 查找或新增模板类型 | [模板目录](templates/README.md) |
+| 查询某项功能当前最好的模型或工具 | [current-best 技能](.claude/skills/current-best/SKILL.md) |
 
 ## 一次性设置为 GitHub 模板仓库
 
@@ -53,6 +54,14 @@ cp -n templates/madr.md docs/decisions/0001-image-build-strategy.md
 已接受决策的重大取舍改变时，新增记录并相互链接。模板库的更新用于改善未来文档；历史记录保留当时的理由。
 
 GitHub 的模板功能复制整个仓库，生成新仓库的独立历史。后续模板变更不会自动同步到已生成仓库，可按需人工挑选变更。
+
+## Agent 技能
+
+`.claude/skills/` 中的技能随仓库分发，Claude Code 在本仓库中会自动加载。
+
+* `current-best`：回答“做某件事现在哪个最好”时，先查 [BenchLM](https://benchlm.ai/) 等实时榜单和一手来源，再给出带数据日期、来源和复查时间的结论，避免沿用过时的记忆。直接提问即可触发，也可输入 `/current-best <问题>`。数据源清单见 [sources.md](.claude/skills/current-best/references/sources.md)。
+
+在网络受限的云端环境中，需要把 `benchlm.ai` 等域名加入环境的允许列表；否则技能只能依靠搜索摘要，并会在结论中注明。
 
 ## 扩展其他类型
 
