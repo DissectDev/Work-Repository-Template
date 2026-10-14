@@ -58,6 +58,7 @@
 * 文本向量（embedding）：MTEB，<https://huggingface.co/spaces/mteb/leaderboard>。先选对子榜（多语言、中文、代码检索等）；结果多为自报，排名方法也调整过。
 * 语音识别：Open ASR Leaderboard，<https://huggingface.co/spaces/hf-audio/open_asr_leaderboard>。比较 WER 和速度（RTFx），分英语、多语言、长音频等赛道。
 * 语音合成、图像、视频、音乐生成：Artificial Analysis 与 LMArena 的对应竞技场榜。
+* 决策模型（对是非、选择、打分类问题返回带概率的答案，2026-09 起出现）：尚无统一的可信榜单。独立评测见 <https://github.com/nibzard/decision-model-benchmark> 和 <https://jevals.com/>；<https://openrouter.ai/rankings/decisions> 只反映用量。厂商自测有时以前沿 LLM 的答案为标准答案，衡量的是一致性，不是正确率。
 * 其他专项（OCR、文档解析、翻译、多模态理解等）：搜 `<任务> benchmark leaderboard <年份>`，优先由基准作者维护、写有更新日期的页面。Papers with Code 已于 2025 年停止服务，旧链接里的 SOTA 表不再更新，不要当作当前结果引用。
 
 ## 非模型实体
@@ -75,6 +76,7 @@
 
 * 检索词里写当前月份和年份；中文、英文各搜一次。
 * 按月的发布追踪页：搜 `AI models released <月份 年份>`。这类页面多为二手汇总，只用来发现候选。
+* 问题针对某个框架（如“DSPy 用哪个模型”）时，先看该框架最新的 release notes：新版本可能已原生支持一类新模型，或改变了推荐配置。
 * 二手汇总站更新节奏不一。2026-10 试用时，llm-stats.com 的 SWE-bench Verified 榜首仍停在上一代模型，而 BenchLM 与 Vals AI 已更新。
 * `<功能> new OR launch OR release <月份 年份>`、`<榜首候选> vs`、`<榜首候选> alternative`。
 * 榜单 changelog、厂商博客与发布说明、arXiv 近期论文中关于 `state of the art on <基准>` 的表述。
